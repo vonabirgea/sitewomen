@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ main_titile|default:"Без заголовка" }}</title>
+</head>
+<body>
+    <p>{{ menu|join:" | " }}</p>
+    <p>{{ integer|default:"4" }}</p>
+    <p>{{ float|divisibleby:"3" }}</p>
+    <p>{{ lst|length }}</p>
+    <p>{{ set }}</p>
+    <p>{{ dict.key_1 }}</p>
+    <p>{{ obj.a }}</p>
+    <p>{{ "The Main Page"|slugify }}</p>
+    <p>{{ url }}</p>
+    <h1>{{ titile|cut:" "|cut:"?"|upper }}</h1>    
+</body>
+</html>
