@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 
+from .forms import AddPostForm
 from .models import Category, TagPost, Women
 
 
@@ -14,16 +15,8 @@ menu = [
     {'title': 'Войти', 'url_name': 'login'},
 ]
 
-data_db = [
-    {'id': 1, 'title': 'Анджелина Джоли', 'content': '''<h1>Анджелина Джоли</h1> (англ. Angelina Jolie[7], при рождении Войт (англ. Voight), ранее Джоли Питт (англ. Jolie Pitt); род. 4 июня 1975, Лос-Анджелес, Калифорния, США) — американская актриса кино, телевидения и озвучивания, кинорежиссёр, сценаристка, продюсер, фотомодель, посол доброй воли ООН.
-    Обладательница премии «Оскар», трёх премий «Золотой глобус» (первая актриса в истории, три года подряд выигравшая премию) и двух «Премий Гильдии киноактёров США».''', 'is_published': True},
-    {'id': 2, 'title': 'Марго Робби', 'content': 'Биография Марго Робби', 'is_published': False},
-    {'id': 3, 'title': 'Джулия Робертс', 'content': 'Биография Джулии Робертс', 'is_published': True},
-    
-]
-
 def index(request):  # HttpRequest
-    posts = Women.published.all()
+    posts = Women.published.all().select_related('cat')
     
     data = {
         'title': 'Главная страница',
@@ -52,8 +45,25 @@ def show_post(request, post_slug):
     return render(request, "women/post.html", data)
 
 
-def add_page(request):
-    return HttpResponse("Добавление статьи")
+def addpage(request):
+    if request.method == 'POST':
+        form = AddPostForm(request.POST)
+        if form.is_valid():
+            # print(form.cleaned_data)
+            try:
+                Women.objects.create(**form.cleaned_data)
+                return redirect('home')
+            except:
+                form.add_error(None, "Ошибка добавления поста")
+    else:
+        form = AddPostForm()
+    
+    data = {
+        'menu': menu, 
+        'title': 'Добавление статьи',
+        'form': form
+        }
+    return render(request, "women/addpage.html", data)
 
 
 def contact(request):
@@ -66,7 +76,7 @@ def login(request):
 
 def show_category(request, cat_slug):
     category = get_object_or_404(Category, slug=cat_slug)
-    posts = Women.published.filter(cat_id=category.pk)
+    posts = Women.published.filter(cat_id=category.pk).select_related("cat")
     data = {
         'title': f"Рубрика: {category.name}",
         'menu': menu,
@@ -82,7 +92,7 @@ def page_not_found(request, exception):
 
 def show_tag_postlist(request, tag_slug):
     tag = get_object_or_404(TagPost, slug=tag_slug)
-    posts = tag.tags.filter(is_published=Women.Status.PUBLISHED)
+    posts = tag.tags.filter(is_published=Women.Status.PUBLISHED).select_related("cat")
 
     data = {
         'title': f"Тег: {tag.tag}",
