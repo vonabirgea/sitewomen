@@ -4,8 +4,8 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 
-from .forms import AddPostForm
-from .models import Category, TagPost, Women
+from .forms import AddPostForm, UploadFileForm
+from .models import Category, TagPost, UploadFiles, Women
 
 
 menu = [
@@ -28,9 +28,21 @@ def index(request):  # HttpRequest
     return render(request, "women/index.html", context=data)
 
 
+# def handle_uploaded_file(f):
+#     with open(f"sitewomen/uploads/{f.name}", "wb+") as destination:
+#         for chunk in f.chunks():
+#             destination.write(chunk)
+
+
 def about(request):
-    data = {'title': 'О сайте'}
-    return render(request, "women/about.html", {'title': 'О сайте', 'menu': menu})
+    if request.method == "POST":
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            fp = UploadFiles(file=form.cleaned_data['file'])
+            fp.save()
+    else:
+        form = UploadFileForm()
+    return render(request, "women/about.html", {'title': 'О сайте', 'menu': menu, 'form': form})
 
 
 def show_post(request, post_slug):
@@ -47,14 +59,16 @@ def show_post(request, post_slug):
 
 def addpage(request):
     if request.method == 'POST':
-        form = AddPostForm(request.POST)
+        form = AddPostForm(request.POST, request.FILES)
         if form.is_valid():
             # print(form.cleaned_data)
-            try:
-                Women.objects.create(**form.cleaned_data)
-                return redirect('home')
-            except:
-                form.add_error(None, "Ошибка добавления поста")
+            # try:
+            #     Women.objects.create(**form.cleaned_data)
+            #     return redirect('home')
+            # except:
+            #     form.add_error(None, "Ошибка добавления поста")
+            form.save()
+            return redirect('home')
     else:
         form = AddPostForm()
     

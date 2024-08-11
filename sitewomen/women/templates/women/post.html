@@ -18,7 +18,7 @@
 <h1>{{post.title}}</h1>
 
 {% if post.photo %}
-<p><img src="{{post.photo.url}}" class="img-article-left"></p>
+<p><img class="img-article-left" src="{{post.photo.url}}"></p>
 {% endif %}
 
 {{post.content|linebreaks}}

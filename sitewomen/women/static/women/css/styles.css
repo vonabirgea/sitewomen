@@ -397,7 +397,7 @@ ul.lang-list li a:hover {color: #fdc073;}
     vertical-align: top;
 }
 
-.form-error ul {
+.form-error ul li {
     list-style: none;
     padding: 0;
     color: #CC0000;
