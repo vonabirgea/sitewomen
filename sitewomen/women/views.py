@@ -1,18 +1,16 @@
 from typing import Any
 from django.db.models.base import Model
 from django.db.models.query import QuerySet
-from django.http import Http404, HttpResponse, HttpResponseNotFound, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
-from django.template.loader import render_to_string
-from django.template.defaultfilters import slugify
-from django.views import View
-from django.views.generic import TemplateView, ListView, DetailView, FormView, CreateView, UpdateView
+from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.core.paginator import Paginator
 
 from women.utils import DataMixin
 
-from .forms import AddPostForm, UploadFileForm
-from .models import Category, TagPost, UploadFiles, Women
+from .forms import AddPostForm
+from .models import TagPost, Women
 
 
 class WomenHome(DataMixin, ListView):
@@ -27,14 +25,13 @@ class WomenHome(DataMixin, ListView):
 
 
 def about(request):
-    if request.method == "POST":
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            fp = UploadFiles(file=form.cleaned_data['file'])
-            fp.save()
-    else:
-        form = UploadFileForm()
-    return render(request, "women/about.html", {'title': 'О сайте', 'form': form})
+    contact_list = Women.published.all()
+    paginator = Paginator(contact_list, 3)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "women/about.html", {'title': 'О сайте', 'page_obj': page_obj})
 
 
 # def show_post(request, post_slug):
