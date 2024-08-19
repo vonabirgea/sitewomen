@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from sitewomen import settings
-from women.views import page_not_found
+from women.views import WomenAPIView, page_not_found
 from django.conf.urls.static import static
 
 urlpatterns = [
@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('women.urls')),
     path('users/', include('users.urls', namespace="users")),
     path("__debug__/", include("debug_toolbar.urls")),
+    path("api/v1/womenlist/", WomenAPIView.as_view())
 ]
 
 
