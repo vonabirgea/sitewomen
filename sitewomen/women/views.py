@@ -18,13 +18,13 @@ from .models import TagPost, Women
 
 class WomenHome(DataMixin, ListView):
     # model = Women
-    template_name = 'women/index.html'
-    context_object_name = 'posts'
-    title_page = 'Главная страница'
+    template_name = "women/index.html"
+    context_object_name = "posts"
+    title_page = "Главная страница"
     cat_selected = 0
 
     def get_queryset(self) -> QuerySet[any]:
-        return Women.published.all().select_related('cat')
+        return Women.published.all().select_related("cat")
 
 
 @login_required
@@ -32,10 +32,12 @@ def about(request):
     contact_list = Women.published.all()
     paginator = Paginator(contact_list, 3)
 
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    return render(request, "women/about.html", {'title': 'О сайте', 'page_obj': page_obj})
+    return render(
+        request, "women/about.html", {"title": "О сайте", "page_obj": page_obj}
+    )
 
 
 # def show_post(request, post_slug):
@@ -51,14 +53,13 @@ def about(request):
 
 
 class ShowPost(DataMixin, DetailView):
-    template_name = 'women/post.html'
-    slug_url_kwarg = 'post_slug'
-    context_object_name = 'post'
+    template_name = "women/post.html"
+    slug_url_kwarg = "post_slug"
+    context_object_name = "post"
 
     def get_context_data(self, **kwargs) -> dict[str, any]:
         context = super().get_context_data(**kwargs)
-        return self.get_mixin_context(context, title=context['post'].title)
-
+        return self.get_mixin_context(context, title=context["post"].title)
 
     def get_object(self, queryset=None):
         return get_object_or_404(Women.published, slug=self.kwargs[self.slug_url_kwarg])
@@ -67,25 +68,26 @@ class ShowPost(DataMixin, DetailView):
 class AddPage(PermissionRequiredMixin, LoginRequiredMixin, DataMixin, CreateView):
     form_class = AddPostForm
     model = Women
-    template_name = 'women/addpage.html'
-    title_page = 'Добавление статьи'
-    permission_required = 'women.add_women'
+    template_name = "women/addpage.html"
+    title_page = "Добавление статьи"
+    permission_required = "women.add_women"
 
     def form_valid(self, form):
         w = form.save(commit=False)
         w.author = self.request.user
         return super().form_valid(form)
 
+
 class UpdatePage(PermissionRequiredMixin, DataMixin, UpdateView):
     model = Women
-    fields = ['title', 'content', 'photo', 'is_published', 'cat']
-    template_name = 'women/addpage.html'
-    success_url = reverse_lazy('home')
-    title_page = 'Редактирование статьи'
-    permission_required = 'women.change_women'
+    fields = ["title", "content", "photo", "is_published", "cat"]
+    template_name = "women/addpage.html"
+    success_url = reverse_lazy("home")
+    title_page = "Редактирование статьи"
+    permission_required = "women.change_women"
 
 
-@permission_required(perm='women.add_women', raise_exception=True)
+@permission_required(perm="women.add_women", raise_exception=True)
 def contact(request):
     return HttpResponse("Обратная связь")
 
@@ -95,17 +97,21 @@ def login(request):
 
 
 class WomenCategory(DataMixin, ListView):
-    template_name = 'women/index.html'
-    context_object_name = 'posts'
+    template_name = "women/index.html"
+    context_object_name = "posts"
     allow_empty = False
 
     def get_queryset(self) -> QuerySet[Any]:
-        return Women.published.filter(cat__slug=self.kwargs['cat_slug']).select_related("cat")
-    
+        return Women.published.filter(cat__slug=self.kwargs["cat_slug"]).select_related(
+            "cat"
+        )
+
     def get_context_data(self, **kwargs) -> dict[str, any]:
         context = super().get_context_data(**kwargs)
-        cat = context['posts'][0].cat
-        return self.get_mixin_context(context, title='Категория - ' + cat.name, cat_selected=cat.id)
+        cat = context["posts"][0].cat
+        return self.get_mixin_context(
+            context, title="Категория - " + cat.name, cat_selected=cat.id
+        )
 
 
 def page_not_found(request, exception):
@@ -113,22 +119,45 @@ def page_not_found(request, exception):
 
 
 class TagPostList(DataMixin, ListView):
-    template_name = 'women/index.html'
-    context_object_name = 'posts'
+    template_name = "women/index.html"
+    context_object_name = "posts"
     allow_empty = False
 
     def get_queryset(self):
-        return Women.published.filter(tags__slug=self.kwargs['tag_slug']).select_related('cat')
-    
+        return Women.published.filter(
+            tags__slug=self.kwargs["tag_slug"]
+        ).select_related("cat")
+
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        tag = TagPost.objects.get(slug=self.kwargs['tag_slug'])
-        return self.get_mixin_context(context, title='Тег - ' + tag.tag)
+        tag = TagPost.objects.get(slug=self.kwargs["tag_slug"])
+        return self.get_mixin_context(context, title="Тег - " + tag.tag)
 
 
 from rest_framework import generics
 from .serializers import WomenSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.forms import model_to_dict
 
-class WomenAPIView(generics.ListAPIView):
-    queryset = Women.objects.all()
-    serializer_class = WomenSerializer
+# class WomenAPIView(generics.ListAPIView):
+#     queryset = Women.objects.all()
+#     serializer_class = WomenSerializer
+
+
+class WomenAPIView(APIView):
+    def get(self, request):
+        w = Women.objects.all()
+        return Response({"posts": WomenSerializer(w, many=True).data})
+
+    def post(self, request):
+        serializer = WomenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        post_new = Women.objects.create(
+            title=request.data['title'],
+            content=request.data['content'],
+            cat_id=request.data['cat_id']
+        )
+
+        return Response({'post': WomenSerializer(post_new).data})
