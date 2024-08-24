@@ -75,7 +75,7 @@ class Women(models.Model):
     class Meta:
         verbose_name = "Известные женщины"
         verbose_name_plural = "Известные женщины"
-        ordering = ["-time_create"]
+        ordering = ["time_create"]
         indexes = [models.Index(fields=["-time_create"])]
 
     def get_absolute_url(self):
