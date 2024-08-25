@@ -64,6 +64,7 @@ class Women(models.Model):
         related_name="posts",
         null=True,
         default=None,
+        verbose_name="Пользователь (автор)",
     )
 
     objects = models.Manager()

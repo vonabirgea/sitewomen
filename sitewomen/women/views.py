@@ -8,12 +8,15 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.core.paginator import Paginator
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
 
 
+from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from women.utils import DataMixin
 
 from .forms import AddPostForm
-from .models import TagPost, Women
+from .models import Category, TagPost, Women
 
 
 class WomenHome(DataMixin, ListView):
@@ -134,7 +137,7 @@ class TagPostList(DataMixin, ListView):
         return self.get_mixin_context(context, title="Тег - " + tag.tag)
 
 
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from .serializers import WomenSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -147,57 +150,37 @@ from django.forms import model_to_dict
 class WomenAPIList(generics.ListCreateAPIView):
     queryset = Women.objects.all()
     serializer_class = WomenSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, )
 
-
-class WomenAPIUpdate(generics.UpdateAPIView):
+class WomenAPIUpdate(generics.RetrieveUpdateAPIView):
     queryset = Women.objects.all()
     serializer_class = WomenSerializer
+    permission_classes = (IsOwnerOrReadOnly, )
 
-
-class WomenAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
+class WomenAPIDestroy(generics.RetrieveDestroyAPIView):
     queryset = Women.objects.all()
     serializer_class = WomenSerializer
+    permission_classes = (IsAdminOrReadOnly, )
 
-# class WomenAPIView(APIView):
-#     def get(self, request):
-#         w = Women.objects.all()
-#         return Response({"posts": WomenSerializer(w, many=True).data})
+# class WomenAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Women.objects.all()
+#     serializer_class = WomenSerializer
 
-#     def post(self, request):
-#         serializer = WomenSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
 
-#         return Response({'post': serializer.data})
-    
+# class WomenViewSet(viewsets.ModelViewSet):
+#     # queryset = Women.objects.all()
+#     serializer_class = WomenSerializer
 
-#     def put(self, request, *args, **kwargs):
-#         pk = kwargs.get("pk", None)
+#     def get_queryset(self):
+#         pk = self.kwargs.get("pk")
+
 #         if not pk:
-#             return Response({"error": "Method PUT not allowed"})
-        
-#         try:
-#             instance = Women.objects.get(pk=pk)
-#         except:
-#             return Response({"error": "Object does not exist"})
-        
-#         serializer = WomenSerializer(data=request.data, instance=instance)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response({"post": serializer.data})
-    
+#             return Women.objects.all()[:3]
 
-#     def delete(self, request, *args, **kwargs):
-#         pk = kwargs.get("pk", None)
-#         if not pk:
-#             return Response({"error": "Method DELETE not allowed"})
-        
-#         try:
-#             record = Women.objects.get(pk=pk)
-#         except:
-#             return Response({"error": "Object does not exist"})
-        
-#         record.delete()
-        
-#         return Response({"post": "delete post " + str(pk)})
+#         return Women.objects.filter(pk=pk)
 
+
+#     @action(methods=['get'], detail=True)
+#     def category(self, request, pk=None):
+#         cats = Category.objects.get(pk=pk)
+#         return Response({'cats': cats.name})

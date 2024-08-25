@@ -10,6 +10,8 @@ from .models import Women
 #         self.content = content
 
 class WomenSerializer(serializers.ModelSerializer):
+    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    
     class Meta:
         model = Women
         # fields = ('title', 'content', 'slug', 'cat')
